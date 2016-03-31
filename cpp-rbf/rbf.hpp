@@ -135,7 +135,7 @@ namespace rbf{
 
     /*! Multivariate Gaussian density
      *
-     *   f(x)  = e^{-\gamma * sum(x-c)}
+     *   f(x)  = e^{-\gamma * sum((x-c)^2)}
      *
      *  @param X  : Input vector of size nvariables
      *
