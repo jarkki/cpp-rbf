@@ -29,6 +29,11 @@ using namespace arma;
 using namespace rbf;
 
 
+/*!    Approximates 2d and 3d noisy sin functions.
+ *     Plots the results with Python.
+ *
+ *
+ */
 int main(int argc, char *argv[])
 {
   // Seed the rng

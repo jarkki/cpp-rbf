@@ -27,17 +27,35 @@
 using namespace std;
 using namespace arma;
 
+/*!   Matrix of x ~ U(a,b) size (n_rows,n_cols)
+ *
+ */
 mat uniform(const double a, const double b, const int n_rows, const size_t n_cols){
-  // Matrix of x ~ U(a,b) size (n_rows,n_cols)
+
   return a + (b-a)*randu(n_rows,n_cols);
 
 }
-vec uniform(const double a, const double b, const size_t n){
-  // Vector of x ~ U(a,b) size n
-  return a + (b-a)*randu(n);
 
+/*!   Vector of x ~ U(a,b) size n
+ *
+ */
+vec uniform(const double a, const double b, const size_t n){
+  return a + (b-a)*randu(n);
 }
 
+/*!   Create noisy test data from sin(x) with added Gaussian noise
+ *
+ *               y = f(x) = sin(x) + norm(0,sd)
+ *
+ *    The inputs x are sampled uniformly from [a,b]
+ *
+ *  @param a  interval start
+ *  @param b  interval end
+ *  @param sd standard deviation
+ *  @param n  number of samples
+ *
+ *  @retval   two-tuple of inputs and targets
+ */
 tuple <mat,vec> create_test_data_2d(double a, double b, double sd, int n){
 
   // Uniformly sampled points
@@ -51,6 +69,19 @@ tuple <mat,vec> create_test_data_2d(double a, double b, double sd, int n){
 }
 
 
+/*!   Create noisy test data from two-dimension sin  with added Gaussian noise
+ *
+ *               y = f(x,y) = sin(x) * sin(y) + norm(0,sd)
+ *
+ *    The inputs x are sampled uniformly from [a,b]
+ *
+ *  @param a  interval start
+ *  @param b  interval end
+ *  @param sd standard deviation
+ *  @param n  number of samples
+ *
+ *  @retval   two-tuple of inputs and targets
+ */
 tuple <mat,vec> create_test_data_3d(double a, double b, double sd, int n){
 
   // Uniformly sampled points
@@ -62,6 +93,13 @@ tuple <mat,vec> create_test_data_3d(double a, double b, double sd, int n){
   return make_tuple (X,y);
 }
 
+/*!   Create all combinations of items in two vectors
+ *
+ *  @param x1  vector
+ *  @param x2  vector
+ *
+ *  @retval   matrix of size (x1.size()+x2.size()) x 2
+ */
 mat combinations(vec x1, vec x2){
 
   size_t n = x1.size() * x2.size();
@@ -77,6 +115,19 @@ mat combinations(vec x1, vec x2){
   return grid;
 }
 
+
+/*!   Plot the approximation for a single input variable
+ *
+ *    Uses python with numpy and matplotlib libraries
+ *
+ *    Writes plot.py file into project root and executes it.
+ *
+ *  @param X    inputs
+ *  @param y    targets
+ *  @param X2   approximator inputs
+ *  @param yhat approximated targets
+ *
+ */
 void plot_2d(const mat & X, const vec & y, const mat & X2, const vec & yhat){
   ofstream file;
   file.open ("plot.py");
@@ -117,7 +168,24 @@ void plot_2d(const mat & X, const vec & y, const mat & X2, const vec & yhat){
   system ("python plot.py");
 }
 
+/*!   Plot the approximation for two input variables
+ *
+ *    Assumes that the approximator inputs come from the combinations-function
+ *     and that the approximator inputs from each variable are
+ *     equally spaced and have the same length.
+ *
+ *    Uses python with numpy and matplotlib libraries.
+ *
+ *    Writes plot.py file into project root and executes it.
+ *
+ *  @param X      inputs
+ *  @param y      targets
+ *  @param X2     approximator inputs
+ *  @param yhat   approximated targets
+ *  @param axlen  length of unique approximator inputs (same for both variables)
+ *
 
+ */
 void plot3d(const mat & X, const vec & y, const mat & X2, const vec & yhat, size_t axlen){
 
   ofstream file;
