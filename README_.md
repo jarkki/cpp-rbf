@@ -21,7 +21,7 @@ The centroids $c_i$ are equally spaced points in the input space where the basis
 
 While other basis functions can be used, the Gaussian density is a popular choice for continuous function approximation. The Gaussian density is given by
 
-$\phi(r) = e^{(-\gamma r)^2}, \ \ \text{for} \ r=||x-c_i||,$ 
+$\phi(r) = e^{-(\gamma r)^2}, \ \ \text{for} \ r=||x-c_i||,$ 
 
 where $\gamma$ is a scaling factor. While this basis function is nonlinear, the approximator is linear in the weights $w_i$ and so the solution can be approximated with linear least-squares.
 
