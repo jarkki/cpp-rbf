@@ -13,7 +13,7 @@ ARMADILLO_LIB_DIR := /usr/local/Cellar/armadillo/6.400.3_1/lib
 LDFLAGS := -L$(ARMADILLO_LIB_DIR)
 
 # This is a header only library
-DEPS := cpp-rbf/rbf.hpp
+DEPS := cpp-rbf/rbf.hpp examples/utils.hpp
 
 all: testrbf
 
@@ -21,7 +21,7 @@ testrbf: $(DEPS)
 	$(CXX) $(CXXFLAGS) $(INCLUDE_DIRS) $(LDFLAGS) -o testrbf examples/testrbf.cpp $(LDLIBS)
 
 debug: $(DEPS)
-	$(CXX) $(DEBUGFLAGS) $(INCLUDE_DIRS) $(LDFLAGS) -o optgrowth examples/testrbf.cpp $(LDLIBS)
+	$(CXX) $(DEBUGFLAGS) $(INCLUDE_DIRS) $(LDFLAGS) -o testrbf examples/testrbf.cpp $(LDLIBS)
 
 clean:
 	rm testrbf

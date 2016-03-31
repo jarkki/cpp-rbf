@@ -1,4 +1,4 @@
-/* Gaussian Radial Basis Function approximator
+/* Linearly parameterized Gaussian Radial Basis Function approximator
  *
  * Copyright (C) 2016  Jarno Kiviaho <jarkki@kapsi.fi>
  *
@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#pragma once
 
 #include <armadillo>
 #include <math.h>
@@ -23,43 +24,74 @@
 using namespace std;
 using namespace arma;
 
-namespace cpp-rbf{
+namespace rbf{
 
+  /*!  Linearly parameterized Gaussian Radial Basis Function approximator
+   *
+   *
+   *                        y = phi(x) * w,
+   *
+   *   where x is the input, y is the target output, phi(x) is the basis
+   *   function (Gaussian) and w is the weights.
+   *
+   *   The weights are solved for with least squares approximation.
+   *
+   *
+   */
   class GaussianRBF{
   public:
 
-    size_t dim;
-    mat    centroids;
-    mat    domain;
-    size_t nbasis;
-    double gamma;
-    vec    weights;
+    size_t dim;          // Number of variables (input dimension)
+    mat    centroids;    // Centroids
+    size_t nbasis;       // Number of centroids (the basis is of same size without constant)
+    double gamma;        // Gaussian scale parameter
+    vec    weights;      // Vector of weights
+    bool   normalize;    // Whether we should normalize the basis to sum to one
+    bool   add_constant; // Whether we should add constant 1 in front of the basis vector
 
-    GaussianRBF(const mat centroids, const double gamma, mat domain){
-      this->dim = size(centroids)[1]; // Dimension of the inputs
+    /*!  Constructor
+     *
+     *  @param centroids    : Matrix of size ncentroids x nvariables
+     *  @param gamma        : Scales the Gaussian density
+     *  @param normalize    : Whether to normalize the basis values so they sum to one
+     *  @param add_constant : Whether to add constant 1 to the basis vector
+     */
+    GaussianRBF(const mat centroids, const double gamma, bool normalize=false, bool add_constant=false){
+      this->dim = size(centroids)[1];
       this->centroids = centroids;
-      this->domain = domain;
       this->nbasis = size(centroids)[0];
       this->gamma = gamma;
-      this->weights = uniform(-1.0, 1.0,size(centroids)[0]);
+      this->weights = randu(size(centroids)[0]);
+      this->normalize = normalize;
+      this->add_constant = add_constant;
     }
 
-    void GaussianRBF::fit(const mat & X, const vec & y){
-      // Solve for w^hat with linear system
-      // phi * w = y, or
-      // y = phi * w
-      // w^hat = (phi^T * phi)^-1 * phi^T * y
-      vec what(this->weights.size());
-      // First calculate the basis matrix phi ()
-      mat phi(X.n_rows, this->centroids.n_rows);
-      for(int i=0; i < X.n_rows; ++i){
+    /*! Solve for the linear system for weights w:
+     *
+     *  y = phi(x) * w
+     *
+     *  @param X  : Input matrix of size ninputs x nvariables
+     *  @param y  : Vector of target values
+    */
+    void fit(const mat & X, const vec & y){
 
-        // Apply the basis
-        vec phi_i = this->basis(X.row(i));
+      // Check that the input and target have the same length
+      if (X.n_rows != y.n_rows){
+        throw invalid_argument("X y must have same number of rows!");
+      }
 
-        // // Normalize so that sum(phi_i) == 1
-        // phi_i = phi_i/sum(phi_i);
+      vec what, phi_i;
+      size_t ninputs= X.n_rows;
+      size_t phi_cols = add_constant ? this->centroids.n_rows + 1 : this->centroids.n_rows;
+      mat phi(ninputs, phi_cols);
 
+      // For each input
+      for(int i=0; i < ninputs; ++i){
+
+        // Apply the basis to inputs
+        phi_i = this->basis(X.row(i));
+
+        // Add phi to phi-matriz
         phi.row(i) = phi_i.t();
       }
 
@@ -68,7 +100,15 @@ namespace cpp-rbf{
       this->weights = what;
 
     }
-    vec GaussianRBF::predict(const mat & X) const{
+
+    /*! Calculate y = phi(x) * w
+     *
+     *
+     *  @param X  : Input matrix of size ninputs x nvariables
+     *
+     *  @retval   : vector of outputs y = phi(x) * w
+     */
+    vec predict(const mat & X) const{
 
       if (size(X)[1] != size(this->centroids)[1]){
         throw invalid_argument("X and centroids must have same number of columns!");
@@ -82,33 +122,29 @@ namespace cpp-rbf{
         // Apply the basis
         vec phi_i = this->basis(X.row(i));
 
-        // // Normalize so that sum(phi_i) == 1
-        // phi_i = phi_i/sum(phi_i);
-
         // Apply weights
         vec pred = this->weights.t() * phi_i; // * gives the dot product
         y(i) = pred(0);
       }
-
       return y;
     }
 
-    vec GaussianRBF::basis(const rowvec & x) const{
-      if (x.size() != this->centroids.n_cols){
-        throw invalid_argument("x and centroids must have same dimensions!");
-      }
+    vec operator()(const mat & X){
+      return this->predict(X);
+    }
 
-      // // Check if x is within the domain and put it inside the domain (on the edge) if necessary
-      // rowvec x_(x.size());
-      // for (int i = 0; i < x.size(); ++i) {
-      //   if (x(i) < this->domain(i,0)) {
-      //     x_(i) = this->domain(i,0);
-      //   }else if (x(i) > this->domain(i,1)){
-      //     x_(i) = this->domain(i,1);
-      //   }else{
-      //     x_(i) = x(i);
-      //   }
-      // }
+    /*! Multivariate Gaussian density
+     *
+     *   f(x)  = e^{-\gamma * sum(x-c)}
+     *
+     *  @param X  : Input vector of size nvariables
+     *
+     *  @retval   : Gaussian density vector
+     */
+    vec basis(const rowvec & x) const{
+      if (x.size() != this->centroids.n_cols){
+        throw invalid_argument("length of x must equal the number centroid columns!");
+      }
 
       // Precalc the diff x-c
       mat cdiff(size(this->centroids));
@@ -117,13 +153,22 @@ namespace cpp-rbf{
       }
 
       // Multidimensional normal density
-      vec phi = arma::exp(-1.0 * this->gamma * arma::sum(cdiff % cdiff,1)); // dim=1 means row sums
+      vec phi = arma::exp(-1.0 * this->gamma * arma::sum(cdiff % cdiff,1)); // % gives element-wise product
 
-      // Normalize
-      phi = phi/sum(phi);
+      // Normalize to sum to one?
+      if (this->normalize){
+        phi = phi/sum(phi);
+      }
+
+      // Add constant of 1 to the front of the basis vector?
+      if (add_constant){
+        vec phi_padded = ones(phi.size()+1);
+        phi_padded(span(1,phi.size()),0) = phi;
+        phi = phi_padded;
+      }
 
       return phi;
     }
-  }
+  };
 
 }
