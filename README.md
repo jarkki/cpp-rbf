@@ -46,6 +46,6 @@ See [examples/testrbf.cpp](examples/testrbf.cpp).
 
 # License
 
-**mc-control** is made available under the terms of the GPLv3.
+**cpp-rbf** is made available under the terms of the GPLv3.
 
 See the LICENSE file that accompanies this distribution for the full text of the license.
