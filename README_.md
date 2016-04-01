@@ -2,11 +2,11 @@
 
 Example approximation to two-dimensional sin with Gaussian noise (sd=0.3) with 300 uniform random samples:
 
-![](figures/3d_ex2.png)
+![](figures/3d_ex2.png?raw=true)
 
 Example approximation to sin with Gaussian noise (sd=0.3):
 
-![](figures/2d_ex.png)
+![](figures/2d_ex.png?raw=true)
 
 # Introduction
 Gaussian Radial Basis Function approximator is a parametric approximator for smooth functions. It is especially useful when one needs to approximate smooth function from noisy observations.
